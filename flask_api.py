@@ -3,10 +3,14 @@ import json
 import glob
 from outils_recherche import  Outils_rech
 import zipfile
+from collections import OrderedDict
+
 
 app = Flask(__name__)
 outils=Outils_rech()
 listeFic_cv = []
+listeFic_cv_V2 = []
+
 
 
 @app.route('/')
@@ -72,11 +76,38 @@ def affResult():
         return render_template('rechercheCv.html', dl_display=True, resultat = res )
 
 
+@app.route('/cv/rechercheV2',methods=['GET','POST'])
+def affResult2():
+    global listeFic_cv_V2
+    listeFic_cv_V2.clear()
+    if request.method == 'GET':
+       return render_template('rechercheCv2.html',dl_display = False,afficher_table = True)
+    else :
+        # avec formulaire
+        motClef = request.form['motClef']
+        # sans formulaire
+        # motClef = request.args.get('motClef')
+        tab_motClef = motClef.split()
+        listeMot = outils.traitement_motClef(tab_motClef)
+        pathCv = {'pathCv': glob.glob('./cv/*')}
+
+        res = outils.rechercheDansCvs_v3(listeMot, pathCv['pathCv'])
+        print(res)
+        liste_cv=list(res.keys())
+        listeFic_cv_V2 = liste_cv
+
+        print(listeFic_cv_V2)
+
+        res2= OrderedDict(sorted(res.items(),key = lambda t:len(t[1]),reverse=True))
+
+        return render_template('rechercheCv2.html', dl_display=True, resultat = res2, afficher_table = True)
+
+######################################################################  download ###########################
 
 @app.route('/cv/dl',methods=['POST'])
 def dl_cv():
 
-    zipf = zipfile.ZipFile('Name.zip', 'w', zipfile.ZIP_DEFLATED)
+    zipf = zipfile.ZipFile('Cv.zip', 'w', zipfile.ZIP_DEFLATED)
 
     for fic in listeFic_cv:
         zipf.write(fic)
@@ -84,12 +115,28 @@ def dl_cv():
 
     zipf.close()
 
-    return send_file('Name.zip',
+    return send_file('Cv.zip',
                      mimetype='zip',
-                     attachment_filename='Name.zip',
+                     attachment_filename='Cv.zip',
                      as_attachment=True)
 
 
+
+@app.route('/cv/dl2',methods=['POST'])
+def dl_cv_2():
+
+    zipf = zipfile.ZipFile('Cv.zip', 'w', zipfile.ZIP_DEFLATED)
+
+    for fic in listeFic_cv_V2:
+        zipf.write(fic)
+        print(fic)
+
+    zipf.close()
+
+    return send_file('Cv.zip',
+                     mimetype='zip',
+                     attachment_filename='Cv.zip',
+                     as_attachment=True)
 
 
 if __name__ == '__main__':
