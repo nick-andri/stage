@@ -139,6 +139,25 @@ def dl_cv_2():
                      as_attachment=True)
 
 
+@app.route('/cv/dl_candidat',methods=['POST'])
+def dl_cv_candidat():
+
+    zipf = zipfile.ZipFile('Cv_candidat.zip', 'w', zipfile.ZIP_DEFLATED)
+
+    fic=request.form['path']
+    zipf.write(fic)
+    print(fic)
+
+    zipf.close()
+
+    return send_file('Cv_candidat.zip',
+                     mimetype='zip',
+                     attachment_filename='Cv_candidat.zip',
+                     as_attachment=True)
+
+
+
+
 if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=5000, debug=True)
